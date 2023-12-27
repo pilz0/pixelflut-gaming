@@ -10,3 +10,4 @@ fontdue = "0.8.0"
 tokio = { version = "1.35.1", features = ["full"] }
 threadpool = "1.8.1"
 image = "0.24.7"
+rand = { version = "0.8.5", features = [] }

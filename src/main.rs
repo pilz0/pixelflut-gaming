@@ -173,12 +173,16 @@ fn render_buf(i: i32, font_size: f32, dims: (i32, i32), s: &str) -> std::io::Res
     // }
     //
 
-    let img = image::open("resources/img.jpeg").unwrap().into_rgba8();
+    let img = image::open("resources/cs.jpg").unwrap().into_rgba8();
+    // let img = image::open("resources/img.jpeg").unwrap().into_rgba8();
     let img_dims = img.dimensions();
 
     for (mut x,mut y) in iterate_pixels(dims) {
-        x /= 2;
-        y /= 2;
+        x /= 1;
+        y /= 1;
+        if (buf_idx!(x, y) >= buf.len()) {
+            continue;
+        }
         let pixel = &mut buf[buf_idx!(x, y)..];
         if x >= img_dims.0 as i32 || y >= img_dims.1 as i32 {
             continue;
@@ -193,6 +197,10 @@ fn render_buf(i: i32, font_size: f32, dims: (i32, i32), s: &str) -> std::io::Res
     Ok(buf)
 }
 
+use rand::thread_rng;
+use rand::seq::SliceRandom;
+
+
 fn send_buf(i: i32, dims: (i32, i32), mut buf: Vec<u8>) -> std::io::Result<()> {
     let (width, height) = dims;
     let mut stream = connect();
@@ -206,17 +214,18 @@ fn send_buf(i: i32, dims: (i32, i32), mut buf: Vec<u8>) -> std::io::Result<()> {
                     (4 * (x + y * width)) as usize
                 }};
             }
-
-    for x in 0..width {
-        for y in 0..height {
-            if ((x * 238584 % 23 + y * 347234 % 41) % THREADS) != i {
-                continue;
-            }
-            let pixel = &mut buf[buf_idx!(x, y)..];
-            if pixel[3] > 0 {
-                stream.write(format!("PX {x} {y} {}\n", pix2hex(pixel)).into_bytes().as_ref())?;
-                // stream.write(format!("PX {x} {y} ff\n").into_bytes().as_ref())?;
-            }
+    let mut coords = iterate_pixels(dims).collect::<Vec<_>>();
+    coords.shuffle(&mut thread_rng());
+    for (x,y) in coords {
+        if ((x * 238584 % 23 + y * 347234 % 41) % THREADS) != i {
+            continue;
+        }
+        let pixel = &mut buf[buf_idx!(x, y)..];
+        if pixel[3] > 0 {
+            let y = y + 100;
+            let x = x + 1200;
+            stream.write(format!("PX {x} {y} {}\n", pix2hex(pixel)).into_bytes().as_ref())?;
+            // stream.write(format!("PX {x} {y} ff\n").into_bytes().as_ref())?;
         }
     }
 
