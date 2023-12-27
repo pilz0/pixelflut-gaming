@@ -1,0 +1,12 @@
+[package]
+name = "pixelflut-gaming"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+fontdue = "0.8.0"
+tokio = { version = "1.35.1", features = ["full"] }
+threadpool = "1.8.1"
+image = "0.24.7"
