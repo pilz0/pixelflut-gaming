@@ -100,7 +100,7 @@ fn iterate_pixels(dims: (i32, i32)) -> impl Iterator<Item=(i32, i32)> {
     (0..width).flat_map(move |x| (0..height).map(move |y| (x, y)))
 }
 
-fn render_buf(i: i32, font_size: f32, dims: (i32, i32), s: &str) -> std::io::Result<Vec<u8>> {
+fn render_buf(i: i32, dims: (i32, i32), iimg: String) -> std::io::Result<Vec<u8>> {
     println!("init {i}");
     let font = include_bytes!("../resources/font.ttf") as &[u8];
 
@@ -173,13 +173,11 @@ fn render_buf(i: i32, font_size: f32, dims: (i32, i32), s: &str) -> std::io::Res
     // }
     //
 
-    let img = image::open("resources/cs.jpg").unwrap().into_rgba8();
+    let img = image::open(iimg).unwrap().into_rgba8();
     // let img = image::open("resources/img.jpeg").unwrap().into_rgba8();
     let img_dims = img.dimensions();
 
-    for (mut x,mut y) in iterate_pixels(dims) {
-        x /= 1;
-        y /= 1;
+    for (x,y) in iterate_pixels(dims) {
         if (buf_idx!(x, y) >= buf.len()) {
             continue;
         }
@@ -201,7 +199,7 @@ use rand::thread_rng;
 use rand::seq::SliceRandom;
 
 
-fn send_buf(i: i32, dims: (i32, i32), mut buf: Vec<u8>) -> std::io::Result<()> {
+fn send_buf(i: i32, dims: (i32, i32), mut buf: Vec<u8>, ix: i32, iy: i32) -> std::io::Result<()> {
     let (width, height) = dims;
     let mut stream = connect();
 
@@ -222,8 +220,8 @@ fn send_buf(i: i32, dims: (i32, i32), mut buf: Vec<u8>) -> std::io::Result<()> {
         }
         let pixel = &mut buf[buf_idx!(x, y)..];
         if pixel[3] > 0 {
-            let y = y + 100;
-            let x = x + 1200;
+            let y = y + iy;
+            let x = x + ix;
             stream.write(format!("PX {x} {y} {}\n", pix2hex(pixel)).into_bytes().as_ref())?;
             // stream.write(format!("PX {x} {y} ff\n").into_bytes().as_ref())?;
         }
@@ -235,13 +233,18 @@ fn send_buf(i: i32, dims: (i32, i32), mut buf: Vec<u8>) -> std::io::Result<()> {
 }
 
 fn main() -> std::io::Result<()> {
+    let img = std::env::args().nth(1).unwrap();
+    let x = std::env::args().nth(2).unwrap().parse::<i32>().unwrap();
+    let y = std::env::args().nth(3).unwrap().parse::<i32>().unwrap();
+
     let pool = ThreadPool::new(THREADS as usize);
 
     loop {
         for i in 0..THREADS {
+            let img = img.clone();
             pool.execute(move || {
-                let buf = render_buf(i, 150.0, (1280, 720), "play potluckctf.com").unwrap();
-                    loop { send_buf(i, (1280, 720), buf.clone()).unwrap() };
+                let buf = render_buf(i, (1280, 720), img).unwrap();
+                    loop { send_buf(i, (1280, 720), buf.clone(), x, y).unwrap() };
             });
         }
         pool.join();
