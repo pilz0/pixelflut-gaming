@@ -5,7 +5,7 @@ use std::io::prelude::*;
 use threadpool::ThreadPool;
 
 const THREADS: i32 = 1;
-const ADDR: &str = "151.217.15.79:1337";
+const ADDR: &str = "151.217.15.90:1337";
 
 // #[tokio::main]
 // async fn main() -> std::io::Result<()> {
@@ -186,6 +186,9 @@ fn render_buf(i: i32, dims: (i32, i32), iimg: String) -> std::io::Result<Vec<u8>
             continue;
         }
         let rgba = img.get_pixel(x as u32, y as u32);
+        if rgba.0[3] == 0 {
+            continue;
+        }
         pixel[0] = rgba.0[0]; // r
         pixel[1] = rgba.0[1]; // g
         pixel[2] = rgba.0[2]; // b
@@ -215,9 +218,9 @@ fn send_buf(i: i32, dims: (i32, i32), mut buf: Vec<u8>, ix: i32, iy: i32) -> std
     let mut coords = iterate_pixels(dims).collect::<Vec<_>>();
     coords.shuffle(&mut thread_rng());
     for (x,y) in coords {
-        if ((x * 238584 % 23 + y * 347234 % 41) % THREADS) != i {
-            continue;
-        }
+        // if ((x * 238584 % 23 + y * 347234 % 41) % THREADS) != i {
+        //     continue;
+        // }
         let pixel = &mut buf[buf_idx!(x, y)..];
         if pixel[3] > 0 {
             let y = y + iy;
@@ -241,10 +244,11 @@ fn main() -> std::io::Result<()> {
 
     loop {
         for i in 0..THREADS {
+            let rand = rand::random::<i32>();
             let img = img.clone();
             pool.execute(move || {
                 let buf = render_buf(i, (1280, 720), img).unwrap();
-                    loop { send_buf(i, (1280, 720), buf.clone(), x, y).unwrap() };
+                loop { send_buf(rand, (1280, 720), buf.clone(), x, y).unwrap() };
             });
         }
         pool.join();
