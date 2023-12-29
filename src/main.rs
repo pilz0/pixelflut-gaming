@@ -11,7 +11,7 @@ const ADDR: &str = "151.217.15.90:1337";
 // async fn main() -> std::io::Result<()> {
 //     let font = Font::from_bytes(include_bytes!("../resources/font.ttf") as &[u8], fontdue::FontSettings::default()).unwrap();
 //
-//     let dims = (1280, 720);
+//     let dims = (1920,1080);
 //     // let dims = (100, 100);
 //     let (width, height) = dims;
 //     let buf = &mut vec![];
@@ -247,8 +247,8 @@ fn main() -> std::io::Result<()> {
             let rand = rand::random::<i32>();
             let img = img.clone();
             pool.execute(move || {
-                let buf = render_buf(i, (1280, 720), img).unwrap();
-                loop { send_buf(rand, (1280, 720), buf.clone(), x, y).unwrap() };
+                let buf = render_buf(i, (1920, 1080), img).unwrap();
+                loop { send_buf(rand, (1920, 1080), buf.clone(), x, y).unwrap() };
             });
         }
         pool.join();
