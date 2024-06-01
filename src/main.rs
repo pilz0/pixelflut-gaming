@@ -4,8 +4,8 @@ use fontdue::Font;
 use std::io::prelude::*;
 use threadpool::ThreadPool;
 
-const THREADS: i32 = 1;
-const ADDR: &str = "151.217.15.90:1337";
+const THREADS: i32 = 16;
+const ADDR: &str = "192.168.16.2:1234";
 
 // #[tokio::main]
 // async fn main() -> std::io::Result<()> {
